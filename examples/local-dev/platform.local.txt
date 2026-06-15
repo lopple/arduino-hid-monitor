@@ -1,0 +1,12 @@
+# Local development integration for arduino-hid-monitor-tools.
+#
+# Copy this file next to the target Arduino platform.txt.
+# Example target:
+# C:\Users\<user>\AppData\Local\Arduino15\packages\<vendor>\hardware\<arch>\<version>\platform.local.txt
+#
+# This uses Arduino's development-only pluggable discovery/monitor pattern
+# properties. A released package should use package_index.json tool
+# dependencies instead.
+
+pluggable_discovery.hid-monitor.pattern="C:\path\to\arduino-hid-monitor-tools\tools\bin\hid-discovery.cmd"
+pluggable_monitor.pattern.hid-monitor="C:\path\to\arduino-hid-monitor-tools\tools\bin\hid-monitor.cmd"

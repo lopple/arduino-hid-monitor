@@ -1,0 +1,7 @@
+# Local board identification for the HID monitor loopback firmware.
+#
+# Copy this file next to the target Arduino boards.txt.
+# Replace `your_board_id` with the board ID used by the target platform.
+
+your_board_id.upload_port.vid=1209
+your_board_id.upload_port.pid=c003
