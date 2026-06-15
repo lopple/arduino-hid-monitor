@@ -81,6 +81,34 @@ A released board package should provide compiled tools through
 `package_index.json` tool dependencies instead of requiring Python on the user's
 machine.
 
+## Windows Release Build
+
+Install build dependencies, then build the Arduino tool archive:
+
+```powershell
+python -m pip install -r requirements-build.txt
+.\scripts\build-windows-tools.ps1 -PackageVersion 0.1.0
+```
+
+The build creates:
+
+```text
+release/arduino-hid-monitor-0.1.0-windows-amd64.zip
+release/arduino-hid-monitor-0.1.0-windows-amd64.zip.sha256
+```
+
+The archive contains standalone Windows executables for Python-free Arduino IDE
+installations:
+
+```text
+bin/hid-discovery.exe
+bin/hid-monitor.exe
+```
+
+See
+[`docs/package_index_integration.md`](docs/package_index_integration.md)
+for the expected Arduino `package_index.json` integration shape.
+
 ## Development Checks
 
 Run a syntax check without writing `.pyc` files:

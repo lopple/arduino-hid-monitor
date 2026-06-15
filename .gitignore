@@ -1,7 +1,10 @@
 __pycache__/
-*.pyc
+*.py[cod]
+
 logs/
 .venv/
 build/
 dist/
+release/
+
 *.spec
