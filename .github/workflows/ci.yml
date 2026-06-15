@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile Python sources
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          for path in sorted(Path("tools").rglob("*.py")):
+              compile(path.read_text(encoding="utf-8"), str(path), "exec")
+              print(path)
+          PY
+
+      - name: Smoke test discovery stub
+        run: |
+          printf 'HELLO 1\nSTART_SYNC\nQUIT\n' \
+            | ARDUINO_HID_FORCE_STUB=1 python tools/hid-discovery/hid_discovery.py
+
+      - name: Smoke test monitor protocol
+        run: |
+          printf 'HELLO 1\nDESCRIBE\nQUIT\n' \
+            | python tools/hid-monitor/hid_monitor.py

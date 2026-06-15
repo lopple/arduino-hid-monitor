@@ -34,8 +34,8 @@ Install the local files into the directory used by the frontend you are testing.
 This registers the local discovery and monitor tools:
 
 ```text
-pluggable_discovery.hid-monitor.pattern="C:\path\to\arduino-hid-monitor-tools\tools\bin\hid-discovery.cmd"
-pluggable_monitor.pattern.hid-monitor="C:\path\to\arduino-hid-monitor-tools\tools\bin\hid-monitor.cmd"
+pluggable_discovery.hid-monitor.pattern="C:\path\to\arduino-hid-monitor\tools\bin\hid-discovery.cmd"
+pluggable_monitor.pattern.hid-monitor="C:\path\to\arduino-hid-monitor\tools\bin\hid-monitor.cmd"
 ```
 
 This is the development form documented by Arduino's platform specification.
@@ -65,9 +65,10 @@ The discovery address is intentionally a `hid://path/...` value. This lets the
 monitor open the exact Windows HID device path returned by discovery instead of
 doing a second lookup by instance ID.
 
-Firmware with an 8-byte `0xA1` input report enables asynchronous
-device-to-host output through HID interrupt IN reads. Older feature-only
-firmware remains supported, but falls back to reading only after host writes.
+Firmware with an 8-byte `0xA1` input report enables asynchronous TX-ready
+notifications through HID interrupt IN reads. Older feature-only firmware
+remains supported, but falls back to feature-report reads after host writes or
+periodic idle polling.
 
 ## Debug Log
 

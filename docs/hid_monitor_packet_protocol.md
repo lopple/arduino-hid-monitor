@@ -21,9 +21,9 @@ clean monitor-oriented transport that is easy to implement on both sides.
 Using feature reports keeps the transport message-based and avoids relying on
 CDC-ACM or a kernel serial driver.
 
-Firmware may also expose an interrupt IN input report for asynchronous
-device-to-host bytes. The monitor detects this through `InputReportByteLength`
-and uses HID reads when available.
+Firmware may also expose an interrupt IN input report as an asynchronous
+notification path. The monitor detects this through `InputReportByteLength` and
+uses HID reads when available.
 
 ## Frame Format
 
@@ -130,8 +130,8 @@ The Arduino monitor process bridges between:
 The mapping is intentionally simple:
 
 - TCP bytes from IDE -> one or more `WRITE` packets
-- interrupt IN input reports -> TCP bytes back to IDE, when available
-- fallback `READ` packets -> TCP bytes back to IDE, for feature-only firmware
+- interrupt IN input reports -> `READ` wake-up notifications, when available
+- `READ` packets -> TCP bytes back to IDE
 
 This keeps the device protocol stream-like while staying packet-oriented on
 USB.

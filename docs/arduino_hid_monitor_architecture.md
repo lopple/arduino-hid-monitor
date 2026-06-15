@@ -49,8 +49,8 @@ polling when firmware supports notifications.
 During local development, a platform can use pattern-based entries:
 
 ```text
-pluggable_discovery.hid-monitor.pattern="C:\path\to\arduino-hid-monitor-tools\tools\bin\hid-discovery.cmd"
-pluggable_monitor.pattern.hid-monitor="C:\path\to\arduino-hid-monitor-tools\tools\bin\hid-monitor.cmd"
+pluggable_discovery.hid-monitor.pattern="C:\path\to\arduino-hid-monitor\tools\bin\hid-discovery.cmd"
+pluggable_monitor.pattern.hid-monitor="C:\path\to\arduino-hid-monitor\tools\bin\hid-monitor.cmd"
 ```
 
 Released board packages should instead register packaged tools through
