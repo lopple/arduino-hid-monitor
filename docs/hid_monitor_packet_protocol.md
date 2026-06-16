@@ -106,7 +106,8 @@ Request payload is empty. Response payload is:
 ### `0x13` `RESET`
 
 Optional control command for future use. Not required for the first monitor
-implementation.
+implementation. This is reserved for monitor-session control and does not
+define bootloader entry behavior.
 
 ## Status Codes
 
@@ -146,3 +147,10 @@ The first usable implementation only needs:
 
 `STATUS` is helpful for debugging but not required to get an Arduino monitor
 working.
+
+## Out Of Scope: Bootloader Entry
+
+Bootloader entry is intentionally out of scope for the monitor MVP. A future
+`hid-reboot` tool may reuse the same HID enumeration and feature-report backend,
+but it should use a separate command path so monitor stream I/O and firmware
+update control remain clearly separated.

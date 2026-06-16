@@ -63,3 +63,10 @@ pluggable_monitor.required.hid-monitor=vendor:hid-monitor
 
 The released package should ship platform-native executables rather than
 requiring Arduino IDE users to install Python.
+
+## Future Bootloader Entry
+
+Bootloader entry is intentionally outside the monitor MVP. A future
+`hid-reboot` tool can reuse the same HID enumeration and feature-report backend,
+but it should stay separate from the monitor stream protocol so upload control
+does not depend on the debug monitor being enabled.
