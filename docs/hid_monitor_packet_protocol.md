@@ -9,6 +9,39 @@ This document defines a simple device protocol for that monitor path.
 It does not reuse the existing `rv003usb` bootloader protocol. The goal is a
 clean monitor-oriented transport that is easy to implement on both sides.
 
+## Firmware Requirements
+
+A board must ship firmware that implements this HID monitor protocol. Providing
+only a generic HID interface with the right VID/PID is not enough; discovery
+accepts a port only after it can send `PING` over the HID feature report and
+receive `PONG`.
+
+The minimum firmware-side requirements are:
+
+- expose a USB HID interface under the board VID/PID
+- expose a 64-byte feature report with report ID `0xA0`
+- accept host `SetFeature` packets that use the frame format below
+- return response frames through `GetFeature` for report ID `0xA0`
+- implement `PING`, `WRITE`, and `READ`
+- return `BAD_COMMAND`, `BAD_LENGTH`, or `BAD_VERSION` for malformed requests
+  when possible
+
+For a usable monitor session, the firmware needs two byte streams:
+
+- host-to-device bytes accepted by `WRITE`
+- device-to-host bytes returned by `READ`
+
+The optional interrupt IN report `0xA1` is recommended when the device can spare
+an endpoint. It lets firmware notify the tool that device-to-host bytes are
+ready. Without it, the monitor still works, but the PC tool falls back to
+feature-report polling.
+
+Discovery filters candidate HID interfaces in this order:
+
+1. instance ID contains the configured VID/PID, default `1209:C003`
+2. `FeatureReportByteLength` is at least 64 bytes
+3. `PING` returns status `OK` and payload `PONG`
+
 ## Transport Choice
 
 - USB class: `HID`

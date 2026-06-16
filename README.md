@@ -37,10 +37,13 @@ ARDUINO_HID_PID
 
 The device protocol is documented in
 [`docs/hid_monitor_packet_protocol.md`](docs/hid_monitor_packet_protocol.md).
+Board firmware must implement that protocol; matching VID/PID alone is not
+enough for discovery.
 
 In short:
 
 - feature report `0xA0`, `64 bytes`, carries monitor commands and stream data
+- `PING` must return `PONG` for discovery to accept the HID interface
 - optional interrupt IN report `0xA1`, `8 bytes`, notifies the host that
   device-to-host bytes are ready
 - stream bytes are drained with `CMD_READ` feature reports
