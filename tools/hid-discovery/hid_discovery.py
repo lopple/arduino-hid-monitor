@@ -8,7 +8,6 @@ import os
 from pathlib import Path
 import platform
 import sys
-from urllib.parse import quote
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 COMMON_DIR = SCRIPT_DIR.parent / "common"
@@ -16,7 +15,7 @@ if str(COMMON_DIR) not in sys.path:
     sys.path.insert(0, str(COMMON_DIR))
 
 if platform.system() == "Windows":
-    from windows_hid import close_handle, enumerate_hid_devices, get_caps, open_hid_handle
+    from windows_hid import close_handle, enumerate_hid_devices, get_caps, make_hid_monitor_address, open_hid_handle
 
 from hid_monitor_backend import make_backend
 from hid_monitor_protocol import CMD_PING, STATUS_OK, HidMonitorFrame
@@ -106,7 +105,7 @@ def enumerate_windows_hid_ports() -> list[dict]:
         if caps.FeatureReportByteLength < 64:
             continue
 
-        address = "hid://path/" + quote(device.device_path, safe="")
+        address = make_hid_monitor_address(device)
         if not supports_monitor_protocol(address):
             continue
 

@@ -27,6 +27,7 @@ from hid_monitor_protocol import (
 if platform.system() == "Windows":
     from windows_hid import (
         close_handle,
+        find_hid_device_by_monitor_key,
         find_hid_device_by_instance,
         get_feature,
         get_caps,
@@ -224,9 +225,34 @@ class WindowsFeatureReportPathBackend(HidMonitorBackend):
             self.handle = None
 
 
+class WindowsFeatureReportMonitorBackend(WindowsFeatureReportPathBackend):
+    def __init__(self, monitor_key: str) -> None:
+        device = find_hid_device_by_monitor_key(monitor_key)
+        if device is None:
+            raise FileNotFoundError(f"HID monitor device not found for key {monitor_key}")
+
+        self.monitor_key = monitor_key
+        super().__init__(device.device_path)
+
+    def reopen(self) -> None:
+        self.close()
+        device = find_hid_device_by_monitor_key(self.monitor_key)
+        if device is None:
+            raise FileNotFoundError(f"HID monitor device not found for key {self.monitor_key}")
+        self.device_path = device.device_path
+        self.handle = open_hid_handle(self.device_path)
+        self.input_handle = None
+        caps = get_caps(self.handle)
+        self.input_report_size = caps.InputReportByteLength
+
+
 def make_backend(board_port: str) -> HidMonitorBackend:
     if board_port == "hid://stub":
         return StubProtocolBackend()
+
+    if board_port.startswith("hid://monitor/"):
+        monitor_key = unquote(board_port.removeprefix("hid://monitor/"))
+        return WindowsFeatureReportMonitorBackend(monitor_key)
 
     if board_port.startswith("hid://instance/"):
         instance_id = unquote(board_port.removeprefix("hid://instance/"))

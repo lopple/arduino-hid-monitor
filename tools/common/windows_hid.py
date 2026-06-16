@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import ctypes
+import hashlib
+import re
 from ctypes import wintypes
 from dataclasses import dataclass
 
@@ -214,6 +216,36 @@ def find_hid_device_by_instance(instance_id: str) -> HidDeviceInfo | None:
     wanted = instance_id.casefold()
     for device in enumerate_hid_devices():
         if device.instance_id.casefold() == wanted:
+            return device
+    return None
+
+
+def make_hid_monitor_key(device: HidDeviceInfo) -> str:
+    instance_id = device.instance_id.strip()
+    folded = instance_id.casefold()
+    match = re.search(r"vid_([0-9a-f]{4})&pid_([0-9a-f]{4})(?:&mi_([0-9a-f]{2}))?", folded)
+    if match:
+        parts = [match.group(1), match.group(2)]
+        if match.group(3):
+            parts.append(f"mi{match.group(3)}")
+        prefix = "-".join(parts)
+    else:
+        prefix = "device"
+
+    tail = instance_id.split("\\")[-1] or "hid"
+    tail_slug = re.sub(r"[^0-9a-zA-Z]+", "-", tail).strip("-").lower()
+    path_hash = hashlib.sha1(device.device_path.encode("utf-16le")).hexdigest()[:8]
+    return f"{prefix}-{tail_slug}-{path_hash}"
+
+
+def make_hid_monitor_address(device: HidDeviceInfo) -> str:
+    return "hid://monitor/" + make_hid_monitor_key(device)
+
+
+def find_hid_device_by_monitor_key(key: str) -> HidDeviceInfo | None:
+    wanted = key.casefold()
+    for device in enumerate_hid_devices():
+        if make_hid_monitor_key(device).casefold() == wanted:
             return device
     return None
 

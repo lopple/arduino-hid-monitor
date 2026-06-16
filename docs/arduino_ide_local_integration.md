@@ -61,9 +61,10 @@ your_board_id.upload_port.pid=c003
 5. Open the monitor.
 6. Text sent from the monitor is echoed by the loopback firmware.
 
-The discovery address is intentionally a `hid://path/...` value. This lets the
-monitor open the exact Windows HID device path returned by discovery instead of
-doing a second lookup by instance ID.
+The discovery address uses a compact `hid://monitor/...` value so Arduino IDE
+port menus remain readable. The monitor resolves this key back to the matching
+Windows HID device path before opening the device. Legacy `hid://path/...`
+addresses remain supported for development diagnostics.
 
 Firmware with an 8-byte `0xA1` input report enables asynchronous TX-ready
 notifications through HID interrupt IN reads. Older feature-only firmware

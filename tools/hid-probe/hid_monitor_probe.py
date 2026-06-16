@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 import time
-from urllib.parse import quote, unquote
+from urllib.parse import unquote
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 COMMON_DIR = SCRIPT_DIR.parent / "common"
@@ -15,8 +15,15 @@ if str(COMMON_DIR) not in sys.path:
     sys.path.insert(0, str(COMMON_DIR))
 
 from hid_monitor_backend import make_backend
-from hid_monitor_protocol import CMD_PING, CMD_READ, CMD_STATUS, CMD_WRITE, HidMonitorFrame
-from windows_hid import enumerate_hid_devices, get_caps, open_hid_handle, close_handle, find_hid_device_by_instance
+from hid_monitor_protocol import CMD_PING, CMD_READ, CMD_STATUS, CMD_WRITE, STATUS_OK, HidMonitorFrame
+from windows_hid import (
+    enumerate_hid_devices,
+    get_caps,
+    open_hid_handle,
+    close_handle,
+    find_hid_device_by_instance,
+    make_hid_monitor_address,
+)
 
 
 def default_vid() -> str:
@@ -34,7 +41,18 @@ def find_default_board_port(vid: str, pid: str) -> str:
     for device in enumerate_hid_devices():
         folded = device.instance_id.casefold()
         if wanted_vid in folded and wanted_pid in folded:
-            return "hid://path/" + quote(device.device_path, safe="")
+            address = make_hid_monitor_address(device)
+            backend = None
+            try:
+                backend = make_backend(address)
+                response = backend.exchange(HidMonitorFrame(CMD_PING, 0))
+                if response.status == STATUS_OK and response.payload == b"PONG":
+                    return address
+            except Exception:
+                continue
+            finally:
+                if backend is not None:
+                    backend.close()
 
     raise FileNotFoundError(f"no HID device found for VID={vid} PID={pid}")
 

@@ -172,6 +172,10 @@ def is_path_port(board_port: str) -> bool:
     return board_port.startswith("hid://path/")
 
 
+def is_monitor_port(board_port: str) -> bool:
+    return board_port.startswith("hid://monitor/")
+
+
 def decode_instance_port(board_port: str) -> str:
     return unquote(board_port.removeprefix("hid://instance/"))
 
@@ -455,7 +459,12 @@ def handle_command(line: str) -> bool:
             )
             return True
 
-        if is_stub_port(board_port) or is_instance_port(board_port) or is_path_port(board_port):
+        if (
+            is_stub_port(board_port)
+            or is_monitor_port(board_port)
+            or is_instance_port(board_port)
+            or is_path_port(board_port)
+        ):
             try:
                 open_session(client_addr, board_port)
             except (OSError, ValueError) as exc:
