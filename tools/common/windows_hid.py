@@ -221,11 +221,24 @@ def find_hid_device_by_instance(instance_id: str) -> HidDeviceInfo | None:
 
 
 def make_hid_monitor_key(device: HidDeviceInfo) -> str:
+    label = make_hid_monitor_label(device)
+    return re.sub(r"[^0-9a-zA-Z]+", "-", label).strip("-")
+
+
+def make_hid_monitor_hash(device: HidDeviceInfo) -> str:
     return hashlib.sha1(device.device_path.encode("utf-16le")).hexdigest()[:8]
 
 
+def make_unique_hid_monitor_key(device: HidDeviceInfo, devices: list[HidDeviceInfo]) -> str:
+    base_key = make_hid_monitor_key(device)
+    matching_devices = [candidate for candidate in devices if make_hid_monitor_key(candidate) == base_key]
+    if len(matching_devices) <= 1:
+        return base_key
+    return f"{base_key}-{make_hid_monitor_hash(device)}"
+
+
 def make_hid_monitor_address(device: HidDeviceInfo) -> str:
-    return "hid://monitor/" + make_hid_monitor_key(device)
+    return "hid://monitor/" + make_unique_hid_monitor_key(device, enumerate_hid_devices())
 
 
 def make_hid_monitor_label(device: HidDeviceInfo) -> str:
@@ -237,8 +250,9 @@ def make_hid_monitor_label(device: HidDeviceInfo) -> str:
 
 def find_hid_device_by_monitor_key(key: str) -> HidDeviceInfo | None:
     wanted = key.casefold()
-    for device in enumerate_hid_devices():
-        if make_hid_monitor_key(device).casefold() == wanted:
+    devices = enumerate_hid_devices()
+    for device in devices:
+        if make_unique_hid_monitor_key(device, devices).casefold() == wanted:
             return device
     return None
 
