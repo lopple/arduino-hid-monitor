@@ -15,7 +15,14 @@ if str(COMMON_DIR) not in sys.path:
     sys.path.insert(0, str(COMMON_DIR))
 
 if platform.system() == "Windows":
-    from windows_hid import close_handle, enumerate_hid_devices, get_caps, make_hid_monitor_address, open_hid_handle
+    from windows_hid import (
+        close_handle,
+        enumerate_hid_devices,
+        get_caps,
+        make_hid_monitor_address,
+        make_hid_monitor_label,
+        open_hid_handle,
+    )
 
 from hid_monitor_backend import make_backend
 from hid_monitor_protocol import CMD_PING, STATUS_OK, HidMonitorFrame
@@ -109,7 +116,7 @@ def enumerate_windows_hid_ports() -> list[dict]:
         if not supports_monitor_protocol(address):
             continue
 
-        label = f"RV003USB HID Monitor ({instance_id})"
+        label = make_hid_monitor_label(device)
         ports.append(make_port(address, label, instance_id, label, vid, pid))
 
     return ports
