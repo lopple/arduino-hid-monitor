@@ -221,8 +221,13 @@ def find_hid_device_by_instance(instance_id: str) -> HidDeviceInfo | None:
 
 
 def make_hid_monitor_key(device: HidDeviceInfo) -> str:
+    serial = get_hid_serial_number(device.device_path)
+    if serial:
+        return make_hid_monitor_serial_label(serial)
+
     label = make_hid_monitor_label(device)
-    return re.sub(r"[^0-9a-zA-Z]+", "-", label).strip("-")
+    key = re.sub(r"[^0-9a-zA-Z]+", "-", label).strip("-")
+    return f"{key}-{make_hid_monitor_hash(device)}"
 
 
 def make_hid_monitor_hash(device: HidDeviceInfo) -> str:
@@ -230,11 +235,7 @@ def make_hid_monitor_hash(device: HidDeviceInfo) -> str:
 
 
 def make_unique_hid_monitor_key(device: HidDeviceInfo, devices: list[HidDeviceInfo]) -> str:
-    base_key = make_hid_monitor_key(device)
-    matching_devices = [candidate for candidate in devices if make_hid_monitor_key(candidate) == base_key]
-    if len(matching_devices) <= 1:
-        return base_key
-    return f"{base_key}-{make_hid_monitor_hash(device)}"
+    return make_hid_monitor_key(device)
 
 
 def make_hid_monitor_address(device: HidDeviceInfo) -> str:
@@ -242,10 +243,63 @@ def make_hid_monitor_address(device: HidDeviceInfo) -> str:
 
 
 def make_hid_monitor_label(device: HidDeviceInfo) -> str:
+    serial = get_hid_serial_number(device.device_path)
+    if serial:
+        return f"RV003USB HID Monitor ({make_hid_monitor_serial_label(serial)})"
+
     match = re.search(r"&mi_([0-9a-f]{2})", device.instance_id.casefold())
     if match:
         return f"RV003USB HID Monitor (MI {match.group(1).upper()})"
     return "RV003USB HID Monitor"
+
+
+def make_hid_monitor_serial_label(serial: str) -> str:
+    text = serial.strip()
+    if text.upper().startswith("RV003-"):
+        text = text[6:]
+    return re.sub(r"[^0-9a-zA-Z]+", "-", text).strip("-") or "device"
+
+
+def get_hid_serial_number(device_path: str) -> str | None:
+    handle = None
+    try:
+        handle = open_hid_handle(device_path)
+        buffer = ctypes.create_unicode_buffer(126)
+        hid.HidD_GetSerialNumberString.argtypes = [wintypes.HANDLE, ctypes.c_void_p, wintypes.ULONG]
+        hid.HidD_GetSerialNumberString.restype = wintypes.BOOLEAN
+        ok = hid.HidD_GetSerialNumberString(handle, buffer, ctypes.sizeof(buffer))
+        if not ok:
+            return None
+        return buffer.value.strip() or None
+    except OSError:
+        return None
+    finally:
+        if handle is not None:
+            close_handle(handle)
+
+
+def supports_hid_monitor_protocol(device: HidDeviceInfo) -> bool:
+    handle = None
+    try:
+        handle = open_hid_handle(device.device_path)
+        caps = get_caps(handle)
+        if caps.FeatureReportByteLength < 64:
+            return False
+
+        packet = bytearray(64)
+        packet[0] = 0xA0
+        packet[1] = 0x01
+        packet[2] = 0x01
+        set_feature(handle, bytes(packet))
+        response = get_feature(handle, 64, 0xA0)
+        payload_len = response[4]
+        payload = response[8 : 8 + payload_len]
+        return response[5] == 0x00 and payload == b"PONG"
+    except (OSError, ValueError):
+        return False
+    finally:
+        if handle is not None:
+            close_handle(handle)
 
 
 def find_hid_device_by_monitor_key(key: str) -> HidDeviceInfo | None:
@@ -253,7 +307,8 @@ def find_hid_device_by_monitor_key(key: str) -> HidDeviceInfo | None:
     devices = enumerate_hid_devices()
     for device in devices:
         if make_unique_hid_monitor_key(device, devices).casefold() == wanted:
-            return device
+            if supports_hid_monitor_protocol(device):
+                return device
     return None
 
 

@@ -36,6 +36,11 @@ an endpoint. It lets firmware notify the tool that device-to-host bytes are
 ready. Without it, the monitor still works, but the PC tool falls back to
 feature-report polling.
 
+A USB serial string descriptor is recommended for multi-device setups. When it
+is present, discovery uses it for the visible monitor label and compact
+`hid://monitor/...` address. For example, firmware serial
+`RV003-CF33B130D936` is shown as `CF33B130D936`.
+
 Discovery filters candidate HID interfaces in this order:
 
 1. instance ID contains the configured VID/PID, default `1209:C003`
