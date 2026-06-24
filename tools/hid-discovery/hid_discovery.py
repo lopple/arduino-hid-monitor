@@ -16,12 +16,10 @@ if str(COMMON_DIR) not in sys.path:
 
 if platform.system() == "Windows":
     from windows_hid import (
-        close_handle,
         enumerate_hid_devices,
-        get_caps,
+        enumerate_hid_monitor_devices,
         make_hid_monitor_address,
         make_hid_monitor_label,
-        open_hid_handle,
     )
 
 from hid_monitor_backend import make_backend
@@ -94,29 +92,22 @@ def enumerate_windows_hid_ports() -> list[dict]:
     vid = env_vid()
     pid = env_pid()
     ports = []
-    for device in enumerate_hid_devices():
+    candidate_devices = [
+        device
+        for device in enumerate_hid_devices()
+        if f"vid_{vid}" in device.instance_id.casefold() and f"pid_{pid}" in device.instance_id.casefold()
+    ]
+    monitor_devices = enumerate_hid_monitor_devices(candidate_devices)
+    for device in monitor_devices:
         instance_id = device.instance_id.strip()
         if not instance_id:
             continue
-        folded = instance_id.casefold()
-        if f"vid_{vid}" not in folded or f"pid_{pid}" not in folded:
-            continue
-        try:
-            handle = open_hid_handle(device.device_path)
-            try:
-                caps = get_caps(handle)
-            finally:
-                close_handle(handle)
-        except OSError:
-            continue
-        if caps.FeatureReportByteLength < 64:
-            continue
 
-        address = make_hid_monitor_address(device)
+        address = make_hid_monitor_address(device, monitor_devices)
         if not supports_monitor_protocol(address):
             continue
 
-        label = make_hid_monitor_label(device)
+        label = make_hid_monitor_label(device, monitor_devices)
         ports.append(make_port(address, label, instance_id, label, vid, pid))
 
     return ports

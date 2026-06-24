@@ -220,14 +220,21 @@ def find_hid_device_by_instance(instance_id: str) -> HidDeviceInfo | None:
     return None
 
 
-def make_hid_monitor_key(device: HidDeviceInfo) -> str:
+def make_hid_monitor_key(device: HidDeviceInfo, monitor_devices: list[HidDeviceInfo] | None = None) -> str:
     serial = get_hid_serial_number(device.device_path)
+    path_hash = make_hid_monitor_hash(device)
+    mi = get_hid_interface_number(device)
     if serial:
-        return make_hid_monitor_serial_label(serial)
+        serial_label = make_hid_monitor_serial_label(serial)
+        if count_monitor_serial(serial, monitor_devices) <= 1:
+            return serial_label
+        if mi:
+            return f"{serial_label}-mi{mi.lower()}"
+        return f"{serial_label}-path-{path_hash}"
 
-    label = make_hid_monitor_label(device)
-    key = re.sub(r"[^0-9a-zA-Z]+", "-", label).strip("-")
-    return f"{key}-{make_hid_monitor_hash(device)}"
+    if mi:
+        return f"mi{mi.lower()}-path-{path_hash}"
+    return f"path-{path_hash}"
 
 
 def make_hid_monitor_hash(device: HidDeviceInfo) -> str:
@@ -235,22 +242,52 @@ def make_hid_monitor_hash(device: HidDeviceInfo) -> str:
 
 
 def make_unique_hid_monitor_key(device: HidDeviceInfo, devices: list[HidDeviceInfo]) -> str:
-    return make_hid_monitor_key(device)
+    return make_hid_monitor_key(device, devices)
 
 
-def make_hid_monitor_address(device: HidDeviceInfo) -> str:
-    return "hid://monitor/" + make_unique_hid_monitor_key(device, enumerate_hid_devices())
+def make_hid_monitor_address(device: HidDeviceInfo, monitor_devices: list[HidDeviceInfo] | None = None) -> str:
+    if monitor_devices is None:
+        monitor_devices = enumerate_hid_monitor_devices()
+    return "hid://monitor/" + make_unique_hid_monitor_key(device, monitor_devices)
 
 
-def make_hid_monitor_label(device: HidDeviceInfo) -> str:
+def make_hid_monitor_label(device: HidDeviceInfo, monitor_devices: list[HidDeviceInfo] | None = None) -> str:
+    if monitor_devices is None:
+        monitor_devices = enumerate_hid_monitor_devices()
+
     serial = get_hid_serial_number(device.device_path)
+    mi = get_hid_interface_number(device)
+    path_hash = make_hid_monitor_hash(device)
     if serial:
-        return f"RV003USB HID Monitor ({make_hid_monitor_serial_label(serial)})"
+        serial_label = make_hid_monitor_serial_label(serial)
+        if count_monitor_serial(serial, monitor_devices) <= 1:
+            return f"RV003USB HID Monitor ({serial_label})"
+        if mi:
+            return f"RV003USB HID Monitor ({serial_label}, MI {mi})"
+        return f"RV003USB HID Monitor ({serial_label}, path {path_hash})"
 
+    if mi:
+        return f"RV003USB HID Monitor (MI {mi}, path {path_hash})"
+    return f"RV003USB HID Monitor (path {path_hash})"
+
+
+def get_hid_interface_number(device: HidDeviceInfo) -> str | None:
     match = re.search(r"&mi_([0-9a-f]{2})", device.instance_id.casefold())
-    if match:
-        return f"RV003USB HID Monitor (MI {match.group(1).upper()})"
-    return "RV003USB HID Monitor"
+    if not match:
+        return None
+    return match.group(1).upper()
+
+
+def count_monitor_serial(serial: str, monitor_devices: list[HidDeviceInfo] | None) -> int:
+    if monitor_devices is None:
+        return 1
+    wanted = serial.casefold()
+    count = 0
+    for device in monitor_devices:
+        candidate_serial = get_hid_serial_number(device.device_path)
+        if candidate_serial and candidate_serial.casefold() == wanted:
+            count += 1
+    return count
 
 
 def make_hid_monitor_serial_label(serial: str) -> str:
@@ -302,13 +339,18 @@ def supports_hid_monitor_protocol(device: HidDeviceInfo) -> bool:
             close_handle(handle)
 
 
+def enumerate_hid_monitor_devices(devices: list[HidDeviceInfo] | None = None) -> list[HidDeviceInfo]:
+    if devices is None:
+        devices = enumerate_hid_devices()
+    return [device for device in devices if supports_hid_monitor_protocol(device)]
+
+
 def find_hid_device_by_monitor_key(key: str) -> HidDeviceInfo | None:
     wanted = key.casefold()
-    devices = enumerate_hid_devices()
+    devices = enumerate_hid_monitor_devices()
     for device in devices:
         if make_unique_hid_monitor_key(device, devices).casefold() == wanted:
-            if supports_hid_monitor_protocol(device):
-                return device
+            return device
     return None
 
 

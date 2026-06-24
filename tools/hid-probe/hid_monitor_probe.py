@@ -21,6 +21,7 @@ from windows_hid import (
     get_caps,
     open_hid_handle,
     close_handle,
+    enumerate_hid_monitor_devices,
     find_hid_device_by_instance,
     make_hid_monitor_address,
 )
@@ -38,21 +39,25 @@ def find_default_board_port(vid: str, pid: str) -> str:
     wanted_vid = f"vid_{vid.casefold()}"
     wanted_pid = f"pid_{pid.casefold()}"
 
-    for device in enumerate_hid_devices():
-        folded = device.instance_id.casefold()
-        if wanted_vid in folded and wanted_pid in folded:
-            address = make_hid_monitor_address(device)
-            backend = None
-            try:
-                backend = make_backend(address)
-                response = backend.exchange(HidMonitorFrame(CMD_PING, 0))
-                if response.status == STATUS_OK and response.payload == b"PONG":
-                    return address
-            except Exception:
-                continue
-            finally:
-                if backend is not None:
-                    backend.close()
+    candidate_devices = [
+        device
+        for device in enumerate_hid_devices()
+        if wanted_vid in device.instance_id.casefold() and wanted_pid in device.instance_id.casefold()
+    ]
+    monitor_devices = enumerate_hid_monitor_devices(candidate_devices)
+    for device in monitor_devices:
+        address = make_hid_monitor_address(device, monitor_devices)
+        backend = None
+        try:
+            backend = make_backend(address)
+            response = backend.exchange(HidMonitorFrame(CMD_PING, 0))
+            if response.status == STATUS_OK and response.payload == b"PONG":
+                return address
+        except Exception:
+            continue
+        finally:
+            if backend is not None:
+                backend.close()
 
     raise FileNotFoundError(f"no HID device found for VID={vid} PID={pid}")
 

@@ -41,6 +41,13 @@ is present, discovery uses it for the visible monitor label and compact
 `hid://monitor/...` address. For example, firmware serial
 `RV003-CF33B130D936` is shown as `CF33B130D936`.
 
+If a monitor-capable HID interface has no readable serial string, discovery
+falls back to an explicit path-derived key such as
+`hid://monitor/mi02-path-90d86a1a` or `hid://monitor/path-90d86a1a`. The
+`path-` marker is intentional so users can tell that the suffix is not a device
+serial number. If multiple monitor-capable interfaces report the same serial
+string, the interface number is added to keep the address unique.
+
 Discovery filters candidate HID interfaces in this order:
 
 1. instance ID contains the configured VID/PID, default `1209:C003`
