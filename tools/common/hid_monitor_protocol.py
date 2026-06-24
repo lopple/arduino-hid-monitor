@@ -73,6 +73,18 @@ class HidMonitorFrame:
         )
 
 
+def is_supported_ping_response(frame: HidMonitorFrame, expected_sequence: int | None = None) -> bool:
+    if expected_sequence is not None and frame.sequence != (expected_sequence & 0xFF):
+        return False
+    return (
+        frame.report_id == REPORT_ID
+        and frame.version == PROTOCOL_VERSION
+        and frame.command == CMD_PING
+        and frame.status == STATUS_OK
+        and frame.payload == b"PONG"
+    )
+
+
 def chunk_payload(data: bytes) -> list[bytes]:
     if not data:
         return [b""]

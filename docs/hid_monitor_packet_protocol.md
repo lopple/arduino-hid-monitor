@@ -13,8 +13,8 @@ clean monitor-oriented transport that is easy to implement on both sides.
 
 A board must ship firmware that implements this HID monitor protocol. Providing
 only a generic HID interface with the right VID/PID is not enough; discovery
-accepts a port only after it can send `PING` over the HID feature report and
-receive `PONG`.
+accepts a port only after it can send a version `0x01` `PING` over the HID
+feature report and receive a version `0x01` `PONG`.
 
 The minimum firmware-side requirements are:
 
@@ -52,7 +52,8 @@ Discovery filters candidate HID interfaces in this order:
 
 1. instance ID contains the configured VID/PID, default `1209:C003`
 2. `FeatureReportByteLength` is at least 64 bytes
-3. `PING` returns status `OK` and payload `PONG`
+3. `PING` returns version `0x01`, the same sequence, status `OK`, and payload
+   `PONG`
 
 ## Transport Choice
 
@@ -110,6 +111,8 @@ avoiding idle feature-report polling.
 
 Sanity check. Host sends an empty payload. Device replies with:
 
+- protocol version `0x01`
+- command `PING`
 - same sequence
 - status `OK`
 - payload `PONG`

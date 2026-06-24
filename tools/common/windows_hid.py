@@ -9,6 +9,15 @@ import re
 from ctypes import wintypes
 from dataclasses import dataclass
 
+from hid_monitor_protocol import (
+    CMD_PING,
+    PAYLOAD_SIZE,
+    PROTOCOL_VERSION,
+    REPORT_ID,
+    REPORT_SIZE,
+    STATUS_OK,
+)
+
 
 DIGCF_PRESENT = 0x00000002
 DIGCF_DEVICEINTERFACE = 0x00000010
@@ -320,18 +329,27 @@ def supports_hid_monitor_protocol(device: HidDeviceInfo) -> bool:
     try:
         handle = open_hid_handle(device.device_path)
         caps = get_caps(handle)
-        if caps.FeatureReportByteLength < 64:
+        if caps.FeatureReportByteLength < REPORT_SIZE:
             return False
 
-        packet = bytearray(64)
-        packet[0] = 0xA0
-        packet[1] = 0x01
-        packet[2] = 0x01
+        packet = bytearray(REPORT_SIZE)
+        packet[0] = REPORT_ID
+        packet[1] = PROTOCOL_VERSION
+        packet[2] = CMD_PING
         set_feature(handle, bytes(packet))
-        response = get_feature(handle, 64, 0xA0)
+        response = get_feature(handle, REPORT_SIZE, REPORT_ID)
         payload_len = response[4]
+        if payload_len > PAYLOAD_SIZE:
+            return False
         payload = response[8 : 8 + payload_len]
-        return response[5] == 0x00 and payload == b"PONG"
+        return (
+            response[0] == REPORT_ID
+            and response[1] == PROTOCOL_VERSION
+            and response[2] == CMD_PING
+            and response[3] == 0
+            and response[5] == STATUS_OK
+            and payload == b"PONG"
+        )
     except (OSError, ValueError):
         return False
     finally:

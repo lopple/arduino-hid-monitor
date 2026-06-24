@@ -23,7 +23,7 @@ if platform.system() == "Windows":
     )
 
 from hid_monitor_backend import make_backend
-from hid_monitor_protocol import CMD_PING, STATUS_OK, HidMonitorFrame
+from hid_monitor_protocol import CMD_PING, HidMonitorFrame, is_supported_ping_response
 
 
 PROTOCOL_VERSION = 1
@@ -75,7 +75,7 @@ def supports_monitor_protocol(address: str) -> bool:
     try:
         backend = make_backend(address)
         response = backend.exchange(HidMonitorFrame(CMD_PING, 0))
-        return response.status == STATUS_OK and response.payload == b"PONG"
+        return is_supported_ping_response(response, expected_sequence=0)
     except Exception:
         return False
     finally:

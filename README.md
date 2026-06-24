@@ -43,7 +43,8 @@ enough for discovery.
 In short:
 
 - feature report `0xA0`, `64 bytes`, carries monitor commands and stream data
-- `PING` must return `PONG` for discovery to accept the HID interface
+- version `0x01` `PING` must return version `0x01` `PONG` for discovery to
+  accept the HID interface
 - optional interrupt IN report `0xA1`, `8 bytes`, notifies the host that
   device-to-host bytes are ready
 - stream bytes are drained with `CMD_READ` feature reports

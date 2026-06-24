@@ -15,7 +15,14 @@ if str(COMMON_DIR) not in sys.path:
     sys.path.insert(0, str(COMMON_DIR))
 
 from hid_monitor_backend import make_backend
-from hid_monitor_protocol import CMD_PING, CMD_READ, CMD_STATUS, CMD_WRITE, STATUS_OK, HidMonitorFrame
+from hid_monitor_protocol import (
+    CMD_PING,
+    CMD_READ,
+    CMD_STATUS,
+    CMD_WRITE,
+    HidMonitorFrame,
+    is_supported_ping_response,
+)
 from windows_hid import (
     enumerate_hid_devices,
     get_caps,
@@ -51,7 +58,7 @@ def find_default_board_port(vid: str, pid: str) -> str:
         try:
             backend = make_backend(address)
             response = backend.exchange(HidMonitorFrame(CMD_PING, 0))
-            if response.status == STATUS_OK and response.payload == b"PONG":
+            if is_supported_ping_response(response, expected_sequence=0):
                 return address
         except Exception:
             continue
@@ -117,7 +124,11 @@ def main() -> int:
     backend = make_backend(board_port)
     try:
         ping = exchange(backend, CMD_PING, 1)
-        print(f"PING status={ping.status} payload={ping.payload!r}")
+        print(
+            "PING "
+            f"version={ping.version} command={ping.command} sequence={ping.sequence} "
+            f"status={ping.status} payload={ping.payload!r}"
+        )
 
         write_payload = args.write.encode("utf-8")
         write_resp = exchange(backend, CMD_WRITE, 2, write_payload)

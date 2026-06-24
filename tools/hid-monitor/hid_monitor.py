@@ -29,6 +29,7 @@ from hid_monitor_protocol import (
     STATUS_OK,
     HidMonitorFrame,
     chunk_payload,
+    is_supported_ping_response,
 )
 
 
@@ -189,9 +190,11 @@ def open_backend_with_ping(board_port: str, attempts: int = 5) -> HidMonitorBack
             backend = make_backend(board_port)
             last_backend = backend
             response = backend.exchange(HidMonitorFrame(CMD_PING, 0))
-            if response.status != STATUS_OK or response.payload != b"PONG":
+            if not is_supported_ping_response(response, expected_sequence=0):
                 raise RuntimeError(
-                    f"HID monitor ping failed: status={response.status} payload={response.payload!r}"
+                    "HID monitor ping failed: "
+                    f"version={response.version} command={response.command} "
+                    f"sequence={response.sequence} status={response.status} payload={response.payload!r}"
                 )
             if attempt > 1:
                 log_event(f"backend open retry succeeded on attempt {attempt}")
