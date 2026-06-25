@@ -39,7 +39,7 @@ feature-report polling.
 A USB serial string descriptor is recommended for multi-device setups. When it
 is present, discovery uses it for the visible monitor label and compact
 `hid://monitor/...` address. For example, firmware serial
-`RV003-CF33B130D936` is shown as `RV003-CF33B130D936`.
+`BOARD-001122334455` is shown as `BOARD-001122334455`.
 
 If a monitor-capable HID interface has no readable serial string, discovery
 falls back to an explicit path-derived key such as
