@@ -70,7 +70,9 @@ The tool defaults are:
 - PID: `C003`
 - protocol: `hid-monitor`
 
-Board packages should pass VID/PID with `--vid` and `--pid` as shown above.
+The default `1209:C003` VID/PID comes from the first `CH32V003 + rv003usb`
+target setup. It is a tool-package default, not a protocol requirement. Board
+packages should pass VID/PID with `--vid` and `--pid` as shown above.
 The `boards.txt` `upload_port.vid` and `upload_port.pid` entries are still
 useful for Arduino board identification, but the discovery tool does not read
 `boards.txt` directly. The VID/PID can also be overridden for development with

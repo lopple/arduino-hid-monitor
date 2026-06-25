@@ -55,6 +55,11 @@ Discovery filters candidate HID interfaces in this order:
 3. `PING` returns version `0x01`, the same sequence, status `OK`, and payload
    `PONG`
 
+The default `1209:C003` VID/PID comes from the initial `CH32V003 + rv003usb`
+target setup. It is only the default for this tool package, not part of the HID
+monitor protocol itself. Board packages may use another VID/PID as long as they
+pass the matching values to the discovery tool.
+
 ## Transport Choice
 
 - USB class: `HID`

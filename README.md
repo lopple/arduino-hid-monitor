@@ -26,7 +26,9 @@ This is an experimental MVP.
 - PID: `0xC003`
 - protocol: `hid-monitor`
 
-Discovery defaults to this VID/PID. Board packages should pass explicit values
+Discovery defaults to `1209:C003` because the first target firmware is based on
+the existing `CH32V003 + rv003usb` development setup. This is not a protocol
+requirement; derived board packages should pass their explicit VID/PID values
 to `hid-discovery` with `--vid` and `--pid`. For development, the VID/PID can
 also be overridden with environment variables:
 
