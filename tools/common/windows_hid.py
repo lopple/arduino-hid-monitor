@@ -270,14 +270,14 @@ def make_hid_monitor_label(device: HidDeviceInfo, monitor_devices: list[HidDevic
     if serial:
         serial_label = make_hid_monitor_serial_label(serial)
         if count_monitor_serial(serial, monitor_devices) <= 1:
-            return f"RV003USB HID Monitor ({serial_label})"
+            return f"HID Monitor ({serial_label})"
         if mi:
-            return f"RV003USB HID Monitor ({serial_label}, MI {mi})"
-        return f"RV003USB HID Monitor ({serial_label}, path {path_hash})"
+            return f"HID Monitor ({serial_label}, MI {mi})"
+        return f"HID Monitor ({serial_label}, path {path_hash})"
 
     if mi:
-        return f"RV003USB HID Monitor (MI {mi}, path {path_hash})"
-    return f"RV003USB HID Monitor (path {path_hash})"
+        return f"HID Monitor (MI {mi}, path {path_hash})"
+    return f"HID Monitor (path {path_hash})"
 
 
 def get_hid_interface_number(device: HidDeviceInfo) -> str | None:

@@ -63,9 +63,9 @@ def make_port(
 
 def make_stub_port() -> dict:
     address = os.environ.get("ARDUINO_HID_PORT_ADDRESS", "hid://stub")
-    label = os.environ.get("ARDUINO_HID_PORT_LABEL", "RV003 HID Monitor")
+    label = os.environ.get("ARDUINO_HID_PORT_LABEL", "HID Monitor")
     hardware_id = os.environ.get("ARDUINO_HID_HARDWARE_ID", "stub-device")
-    product = os.environ.get("ARDUINO_HID_PRODUCT", "RV003 HID Monitor")
+    product = os.environ.get("ARDUINO_HID_PRODUCT", "HID Monitor")
 
     return make_port(address, label, hardware_id, product, env_vid(), env_pid())
 
