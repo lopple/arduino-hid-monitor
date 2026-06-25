@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 from pathlib import Path
@@ -23,20 +24,32 @@ if platform.system() == "Windows":
     )
 
 from hid_monitor_backend import make_backend
+from hid_monitor_config import add_usb_id_arguments, resolve_usb_ids
 from hid_monitor_protocol import CMD_PING, HidMonitorFrame, is_supported_ping_response
 
 
 PROTOCOL_VERSION = 1
 PROTOCOL_NAME = "hid-monitor"
 PROTOCOL_LABEL = "HID Monitor"
+CONFIG_VID = "1209"
+CONFIG_PID = "c003"
 
 
 def env_vid() -> str:
-    return os.environ.get("ARDUINO_HID_VID", "1209").lower()
+    return CONFIG_VID
 
 
 def env_pid() -> str:
-    return os.environ.get("ARDUINO_HID_PID", "c003").lower()
+    return CONFIG_PID
+
+
+def configure(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser()
+    add_usb_id_arguments(parser)
+    args = parser.parse_args(argv)
+
+    global CONFIG_VID, CONFIG_PID
+    CONFIG_VID, CONFIG_PID = resolve_usb_ids(args, parser)
 
 
 def make_port(
@@ -179,7 +192,8 @@ def handle_command(line: str) -> bool:
     return True
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    configure(argv)
     for raw_line in sys.stdin:
         if not handle_command(raw_line):
             return 0

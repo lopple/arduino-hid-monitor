@@ -67,7 +67,9 @@ avoid opening a device that is already owned by another monitor session.
 During local development, a platform can use pattern-based entries:
 
 ```text
-pluggable_discovery.hid-monitor.pattern="C:\path\to\arduino-hid-monitor\tools\bin\hid-discovery.cmd"
+hid_monitor.discovery.vid=1209
+hid_monitor.discovery.pid=c003
+pluggable_discovery.hid-monitor.pattern="C:\path\to\arduino-hid-monitor\tools\bin\hid-discovery.cmd" --vid "{hid_monitor.discovery.vid}" --pid "{hid_monitor.discovery.pid}"
 pluggable_monitor.pattern.hid-monitor="C:\path\to\arduino-hid-monitor\tools\bin\hid-monitor.cmd"
 ```
 

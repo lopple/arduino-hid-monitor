@@ -15,6 +15,7 @@ if str(COMMON_DIR) not in sys.path:
     sys.path.insert(0, str(COMMON_DIR))
 
 from hid_monitor_backend import make_backend
+from hid_monitor_config import add_usb_id_arguments, resolve_usb_ids
 from hid_monitor_protocol import (
     CMD_PING,
     CMD_READ,
@@ -32,14 +33,6 @@ from windows_hid import (
     find_hid_device_by_instance,
     make_hid_monitor_address,
 )
-
-
-def default_vid() -> str:
-    return "1209"
-
-
-def default_pid() -> str:
-    return "c003"
 
 
 def find_default_board_port(vid: str, pid: str) -> str:
@@ -111,13 +104,13 @@ def print_caps_for_port(board_port: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", help="board port such as hid://instance/...")
-    parser.add_argument("--vid", default=default_vid())
-    parser.add_argument("--pid", default=default_pid())
+    add_usb_id_arguments(parser)
     parser.add_argument("--write", default="hello", help="text to send before READ")
     parser.add_argument("--skip-input", action="store_true", help="do not read interrupt IN input reports")
     args = parser.parse_args()
 
-    board_port = args.port or find_default_board_port(args.vid, args.pid)
+    vid, pid = resolve_usb_ids(args, parser)
+    board_port = args.port or find_default_board_port(vid, pid)
     print(f"board_port={board_port}")
     print_caps_for_port(board_port)
 

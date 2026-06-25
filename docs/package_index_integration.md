@@ -15,7 +15,9 @@ metadata.json
 Board packages can reference the executables from `platform.txt`:
 
 ```text
-pluggable_discovery.hid-monitor.pattern="{runtime.tools.arduino-hid-monitor.path}/bin/hid-discovery.exe"
+hid_monitor.discovery.vid=1209
+hid_monitor.discovery.pid=c003
+pluggable_discovery.hid-monitor.pattern="{runtime.tools.arduino-hid-monitor.path}/bin/hid-discovery.exe" --vid "{hid_monitor.discovery.vid}" --pid "{hid_monitor.discovery.pid}"
 pluggable_monitor.pattern.hid-monitor="{runtime.tools.arduino-hid-monitor.path}/bin/hid-monitor.exe"
 ```
 
@@ -68,13 +70,21 @@ The tool defaults are:
 - PID: `C003`
 - protocol: `hid-monitor`
 
-The VID/PID can be overridden for development or derived board packages with
+Board packages should pass VID/PID with `--vid` and `--pid` as shown above.
+The `boards.txt` `upload_port.vid` and `upload_port.pid` entries are still
+useful for Arduino board identification, but the discovery tool does not read
+`boards.txt` directly. The VID/PID can also be overridden for development with
 environment variables:
 
 ```text
 ARDUINO_HID_VID
 ARDUINO_HID_PID
 ```
+
+If both command-line arguments and environment variables are set, the command
+line wins and the discovery tool writes a warning to stderr. Warnings are never
+written to stdout because stdout is reserved for Arduino's pluggable discovery
+JSON protocol.
 
 The generated `.zip` and `.zip.sha256` files are build outputs. They should be
 attached to GitHub Actions artifacts or GitHub Releases, not committed.

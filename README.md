@@ -26,12 +26,17 @@ This is an experimental MVP.
 - PID: `0xC003`
 - protocol: `hid-monitor`
 
-The VID/PID can be overridden with environment variables:
+Discovery defaults to this VID/PID. Board packages should pass explicit values
+to `hid-discovery` with `--vid` and `--pid`. For development, the VID/PID can
+also be overridden with environment variables:
 
 ```text
 ARDUINO_HID_VID
 ARDUINO_HID_PID
 ```
+
+If both command-line arguments and environment variables are set, the command
+line wins and the tool writes a warning to stderr.
 
 ## Protocol
 
