@@ -44,6 +44,24 @@ All stream bytes still move through `0xA0` feature reports. The interrupt IN
 report is only a wake-up path, so the tool can avoid idle feature-report
 polling when firmware supports notifications.
 
+## Session Ownership
+
+The Windows implementation opens HID device handles with shared read/write
+access, so the operating system may allow another process to open the same HID
+interface at the same time. That does not make concurrent monitor sessions
+safe.
+
+The HID monitor protocol is intended to have one active owner per physical
+monitor interface. Two tools sending `SetFeature`/`GetFeature` exchanges to the
+same interface can race, receive each other's responses, or consume the same
+interrupt IN notification.
+
+Future host tools should enforce this at the tool layer, for example with a
+per-device lock file or Windows named mutex derived from the resolved
+`hid://monitor/...` key or HID device path hash. Diagnostics may still use a
+read-only or explicit force mode, but the default user-facing behavior should
+avoid opening a device that is already owned by another monitor session.
+
 ## Arduino Integration
 
 During local development, a platform can use pattern-based entries:

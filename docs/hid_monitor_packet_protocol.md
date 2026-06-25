@@ -185,6 +185,11 @@ The mapping is intentionally simple:
 This keeps the device protocol stream-like while staying packet-oriented on
 USB.
 
+Only one host-side monitor session should own a physical HID monitor interface
+at a time. The protocol does not define multiplexing or per-client response
+routing. If multiple host processes exchange feature reports concurrently,
+responses and interrupt IN notifications may be consumed by the wrong process.
+
 ## First Implementation Scope
 
 The first usable implementation only needs:
