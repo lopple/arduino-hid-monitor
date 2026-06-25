@@ -33,8 +33,10 @@ jobs:
             $version = "${{ github.ref_name }}".TrimStart("v")
             $tag = "${{ github.ref_name }}"
           }
+          $isPrerelease = $version.StartsWith("0.") -or $version.Contains("-")
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "prerelease=$($isPrerelease.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -54,6 +56,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: arduino-hid-monitor ${{ steps.version.outputs.version }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
           files: |
             release/*.zip
             release/*.sha256

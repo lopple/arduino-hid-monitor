@@ -113,6 +113,9 @@ See
 [`docs/package_index_integration.md`](docs/package_index_integration.md)
 for the expected Arduino `package_index.json` integration shape.
 
+See [`docs/known_limitations.md`](docs/known_limitations.md) for current
+pre-release limitations.
+
 ## Development Checks
 
 Run a syntax check without writing `.pyc` files:
