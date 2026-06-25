@@ -301,8 +301,6 @@ def count_monitor_serial(serial: str, monitor_devices: list[HidDeviceInfo] | Non
 
 def make_hid_monitor_serial_label(serial: str) -> str:
     text = serial.strip()
-    if text.upper().startswith("RV003-"):
-        text = text[6:]
     return re.sub(r"[^0-9a-zA-Z]+", "-", text).strip("-") or "device"
 
 
