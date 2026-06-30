@@ -23,6 +23,13 @@ if platform.system() == "Windows":
         make_hid_monitor_label,
     )
 
+if platform.system() == "Darwin":
+    from macos_hid import (
+        enumerate_macos_hid_devices,
+        make_macos_hid_monitor_address,
+        make_macos_hid_monitor_label,
+    )
+
 from hid_monitor_backend import make_backend
 from hid_monitor_config import add_usb_id_arguments, resolve_usb_ids
 from hid_monitor_protocol import CMD_PING, HidMonitorFrame, is_supported_ping_response
@@ -126,12 +133,31 @@ def enumerate_windows_hid_ports() -> list[dict]:
     return ports
 
 
+def enumerate_macos_hid_ports() -> list[dict]:
+    vid = env_vid()
+    pid = env_pid()
+    ports = []
+    for device in enumerate_macos_hid_devices(int(vid, 16), int(pid, 16)):
+        address = make_macos_hid_monitor_address(device)
+        if not supports_monitor_protocol(address):
+            continue
+
+        label = make_macos_hid_monitor_label(device)
+        hardware_id = f"macos:{device.registry_id:x}"
+        ports.append(make_port(address, label, hardware_id, device.product or label, vid, pid))
+
+    return ports
+
+
 def enumerate_ports() -> list[dict]:
     if os.environ.get("ARDUINO_HID_FORCE_STUB", "").lower() in {"1", "true", "yes"}:
         return [make_stub_port()]
 
     if platform.system() == "Windows":
         return enumerate_windows_hid_ports()
+
+    if platform.system() == "Darwin":
+        return enumerate_macos_hid_ports()
 
     return []
 

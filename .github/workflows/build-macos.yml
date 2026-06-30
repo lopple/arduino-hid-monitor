@@ -1,0 +1,49 @@
+name: Build macOS tools
+
+on:
+  push:
+    branches:
+      - main
+      - "work/**"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  macos-tools:
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compile Python sources
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          for path in sorted(Path("tools").rglob("*.py")):
+              compile(path.read_text(encoding="utf-8"), str(path), "exec")
+              print(path)
+          PY
+
+      - name: Smoke test discovery stub
+        run: |
+          printf 'HELLO 1\nSTART_SYNC\nQUIT\n' \
+            | ARDUINO_HID_FORCE_STUB=1 python3 tools/hid-discovery/hid_discovery.py
+
+      - name: Smoke test monitor protocol
+        run: |
+          printf 'HELLO 1\nDESCRIBE\nQUIT\n' \
+            | python3 tools/hid-monitor/hid_monitor.py
+
+      - name: Build macOS archive
+        run: ./scripts/build-macos-tools.sh "0.0.0-${{ github.sha }}"
+
+      - name: Upload release archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: arduino-hid-monitor-macos-universal
+          path: |
+            release/*.zip
+            release/*.sha256
+          if-no-files-found: error

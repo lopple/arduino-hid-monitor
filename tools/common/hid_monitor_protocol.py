@@ -29,7 +29,7 @@ STATUS_BAD_LENGTH = 0x81
 STATUS_BAD_VERSION = 0x82
 
 
-@dataclass(slots=True)
+@dataclass
 class HidMonitorFrame:
     command: int
     sequence: int = 0

@@ -177,6 +177,10 @@ def is_monitor_port(board_port: str) -> bool:
     return board_port.startswith("hid://monitor/")
 
 
+def is_macos_port(board_port: str) -> bool:
+    return board_port.startswith("hid://macos/")
+
+
 def decode_instance_port(board_port: str) -> str:
     return unquote(board_port.removeprefix("hid://instance/"))
 
@@ -291,7 +295,7 @@ def backend_worker(
             timed_out = False
             try:
                 data = sock.recv(4096)
-            except TimeoutError:
+            except (socket.timeout, TimeoutError):
                 data = b""
                 timed_out = True
 
@@ -373,6 +377,7 @@ def open_session(client_addr: str, board_port: str) -> None:
     log_event(f"open_session client={client_addr!r} board_port={board_port!r}")
     host, port = parse_tcp_address(client_addr)
     sock = socket.create_connection((host, port), timeout=3.0)
+    sock.settimeout(None)
     try:
         backend = open_backend_with_ping(board_port)
     except Exception:
@@ -467,6 +472,7 @@ def handle_command(line: str) -> bool:
             or is_monitor_port(board_port)
             or is_instance_port(board_port)
             or is_path_port(board_port)
+            or is_macos_port(board_port)
         ):
             try:
                 open_session(client_addr, board_port)

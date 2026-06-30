@@ -15,7 +15,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  release-windows:
     runs-on: windows-latest
 
     steps:
@@ -51,6 +51,56 @@ jobs:
       - name: Build executable archive
         shell: pwsh
         run: .\scripts\build-windows-tools.ps1 -PackageVersion "${{ steps.version.outputs.version }}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: arduino-hid-monitor ${{ steps.version.outputs.version }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          files: |
+            release/*.zip
+            release/*.sha256
+
+  release-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set release version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.version }}"
+            tag="v$version"
+          else
+            tag="${{ github.ref_name }}"
+            version="${tag#v}"
+          fi
+          prerelease=false
+          case "$version" in
+            0.*|*-*) prerelease=true ;;
+          esac
+          {
+            echo "version=$version"
+            echo "tag=$tag"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Compile Python sources
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          for path in sorted(Path("tools").rglob("*.py")):
+              compile(path.read_text(encoding="utf-8"), str(path), "exec")
+              print(path)
+          PY
+
+      - name: Build macOS archive
+        run: ./scripts/build-macos-tools.sh "${{ steps.version.outputs.version }}"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2

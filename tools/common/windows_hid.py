@@ -56,7 +56,7 @@ class SP_DEVINFO_DATA(ctypes.Structure):
     ]
 
 
-@dataclass(slots=True)
+@dataclass
 class HidDeviceInfo:
     instance_id: str
     device_path: str

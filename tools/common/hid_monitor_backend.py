@@ -37,6 +37,10 @@ if platform.system() == "Windows":
         set_feature,
     )
 
+if platform.system() == "Darwin":
+    from hid_monitor_config import DEFAULT_PID, DEFAULT_VID
+    from macos_hid import MacFeatureReportDevice
+
 
 def feature_delay_s() -> float:
     text = os.environ.get("ARDUINO_HID_FEATURE_DELAY_MS", "30")
@@ -76,7 +80,7 @@ class HidMonitorBackend:
         return None
 
 
-@dataclass(slots=True)
+@dataclass
 class StubProtocolBackend(HidMonitorBackend):
     """Simple loopback backend that speaks the packet protocol."""
 
@@ -246,9 +250,48 @@ class WindowsFeatureReportMonitorBackend(WindowsFeatureReportPathBackend):
         self.input_report_size = caps.InputReportByteLength
 
 
+class MacFeatureReportBackend(HidMonitorBackend):
+    def __init__(self, address_token: str) -> None:
+        if platform.system() != "Darwin":
+            raise RuntimeError("MacFeatureReportBackend is only supported on macOS")
+
+        token = unquote(address_token)
+        parts = token.split(":")
+        if len(parts) == 3:
+            vid_text, pid_text, registry_text = parts
+        elif len(parts) == 1:
+            vid_text, pid_text, registry_text = DEFAULT_VID, DEFAULT_PID, parts[0]
+        else:
+            raise ValueError(f"unsupported macOS HID address token: {token}")
+
+        self.vid = int(vid_text, 16)
+        self.pid = int(pid_text, 16)
+        self.registry_id = int(registry_text, 16)
+        self.device = MacFeatureReportDevice(self.registry_id, self.vid, self.pid)
+        self.last_feature_exchange = 0.0
+
+    def reopen(self) -> None:
+        self.close()
+        self.device = MacFeatureReportDevice(self.registry_id, self.vid, self.pid)
+
+    def exchange(self, frame: HidMonitorFrame) -> HidMonitorFrame:
+        wait_feature_slot(self)
+        self.device.set_feature(frame.encode())
+        return HidMonitorFrame.decode(self.device.get_feature(64, 0xA0))
+
+    def close(self) -> None:
+        device = getattr(self, "device", None)
+        if device is not None:
+            device.close()
+            self.device = None
+
+
 def make_backend(board_port: str) -> HidMonitorBackend:
     if board_port == "hid://stub":
         return StubProtocolBackend()
+
+    if board_port.startswith("hid://macos/"):
+        return MacFeatureReportBackend(board_port.removeprefix("hid://macos/"))
 
     if board_port.startswith("hid://monitor/"):
         monitor_key = unquote(board_port.removeprefix("hid://monitor/"))
